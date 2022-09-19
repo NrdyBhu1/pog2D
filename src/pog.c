@@ -21,20 +21,20 @@ typedef struct {
 	PyObject_HEAD
 	SDL_Window* window;
 	SDL_Renderer* renderer;
-	SDL_Event* ev;
+	SDL_Event ev;
 } PogContext;
 
 static PyObject*
 PogContext_run(PogContext *self, PyObject *args) {
 	while (true) {
-		SDL_PollEvent(self->ev);
-		if (self->ev->type == SDL_QUIT) {
+		SDL_PollEvent(&self->ev);
+		if (self->ev.type == SDL_QUIT) {
 			break;
-
-			SDL_RenderClear(self->renderer);
-			SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
-			SDL_RenderPresent(self->renderer);
 		}
+
+		SDL_RenderClear(self->renderer);
+		SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
+		SDL_RenderPresent(self->renderer);
 	}
 	Py_RETURN_NONE;
 }
@@ -55,14 +55,20 @@ PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
 	self->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, width, height,
 		SDL_WINDOW_SHOWN);
+
+	if (self->window == NULL) {
+		PyErr_SetString(PogInitError, SDL_GetError());
+		return -1;
+	} else {
+		SDL_Log("Window [%s] [%dx%d] initialized properly\n", title, width, height);
+	}
 	self->renderer = SDL_CreateRenderer(self->window, -1, 0);
-	SDL_PollEvent(self->ev);
 	return 0;
 }
 
 static void
 PogContext_dealloc(PogContext* self) {
-	SDL_DestroyRenderer(self->renderer);
+	SDL_DestroyRenderer(&self->renderer);
 	SDL_DestroyWindow(self->window);
 	Py_TYPE(self)->tp_free((PyObject*) self);
 }
