@@ -14,10 +14,6 @@
 	return ret; \
 }
 
-SDL_Window* window;
-SDL_Renderer* renderer;
-SDL_Event* ev;
-
 static PyObject* PogInitError;
 static bool initialized;
 
@@ -25,8 +21,23 @@ typedef struct {
 	PyObject_HEAD
 	SDL_Window* window;
 	SDL_Renderer* renderer;
-	SDL_Event* ev;
+	SDL_Event ev;
 } PogContext;
+
+static PyObject*
+PogContext_run(PogContext *self, PyObject *args) {
+	while (true) {
+		SDL_PollEvent(&self->ev);
+		if (self->ev.type == SDL_QUIT) {
+			break;
+		}
+
+		SDL_RenderClear(self->renderer);
+		SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
+		SDL_RenderPresent(self->renderer);
+	}
+	Py_RETURN_NONE;
+}
 
 static int
 PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
@@ -44,17 +55,29 @@ PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
 	self->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, width, height,
 		SDL_WINDOW_SHOWN);
+
+	if (self->window == NULL) {
+		PyErr_SetString(PogInitError, SDL_GetError());
+		return -1;
+	} else {
+		SDL_Log("Window [%s] [%dx%d] initialized properly\n", title, width, height);
+	}
 	self->renderer = SDL_CreateRenderer(self->window, -1, 0);
-	SDL_PollEvent(self->ev);
 	return 0;
 }
 
 static void
 PogContext_dealloc(PogContext* self) {
-	SDL_DestroyRenderer(self->renderer);
+	SDL_DestroyRenderer(&self->renderer);
 	SDL_DestroyWindow(self->window);
 	Py_TYPE(self)->tp_free((PyObject*) self);
 }
+
+static PyMethodDef PogContext_methods[] = {
+	{"run", PogContext_run, METH_NOARGS,
+	"Run the main loop"},
+	{NULL}
+};
 
 static PyTypeObject PogContextType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
@@ -65,7 +88,8 @@ static PyTypeObject PogContextType = {
 	.tp_flags = Py_TPFLAGS_DEFAULT,
 	.tp_new = PyType_GenericNew,
 	.tp_init = (initproc) PogContext_init,
-	.tp_dealloc = (destructor) PogContext_dealloc
+	.tp_dealloc = (destructor) PogContext_dealloc,
+	.tp_methods = PogContext_methods
 };
 
 static PyObject*
@@ -84,20 +108,6 @@ init(PyObject *self, PyObject *args) {
 		linked.major, linked.minor, linked.patch);
 	Py_RETURN_NONE;
 }
-
-// static PyObject*
-// loop(PyObject *self) {
-// 	DO_POG_INIT(NULL)
-// 
-// 	SDL_PollEvent(ev);
-// 	while (ev->type != SDL_QUIT) {
-// 		SDL_PollEvent(ev);
-// 
-// 		SDL_RenderClear(renderer);
-// 		SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
-// 		SDL_RenderPresent(renderer);
-// 	}
-// }
 
 static PyObject*
 quit(PyObject *self, PyObject *args) {
