@@ -1,5 +1,6 @@
 import pog
 
-pog.init("Hello, World!", (800, 600))
-pog.simple_loop()
+pog.init()
+c = pog.Context(title="Hello, World!", width=800, height=600)
+c.run()
 pog.quit()
