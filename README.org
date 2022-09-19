@@ -1,0 +1,19 @@
+#+title:    pog2D
+#+author:   NrdyBhu1
+#+date:     2022-09-19
+
+* Usage
+#+begin_src python
+import pog
+
+# important to init
+pog.init()
+
+# Context
+c = pog.Context(title="Hello, World!", width=800, height=600)
+
+# implementation in process
+
+# quit
+pog.quit()
+#+end_src
