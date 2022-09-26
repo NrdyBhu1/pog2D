@@ -22,6 +22,6 @@ pog = Extension('pog',
 	])
 
 setup(name = 'pog2D',
-	version = '0.0.7',
+	version = '0.0.8',
 	description = 'A simple 2D library',
 	ext_modules = [pog])

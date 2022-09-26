@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <stdio.h>
@@ -19,13 +20,22 @@ static bool initialized;
 
 typedef struct {
 	PyObject_HEAD
-	SDL_Window* window;
-	SDL_Renderer* renderer;
+	SDL_Window *window;
+	SDL_Renderer *renderer;
 	SDL_Event ev;
+	PyObject *handlers;
 } PogContext;
+
+static void
+PogContext_call_handler(PogContext *self, const char* event) {
+	PyObject *handler = PyDict_GetItemString(self->handlers, event);
+	if (handler)
+		PyObject_CallNoArgs(handler);
+}
 
 static PyObject*
 PogContext_run(PogContext *self, PyObject *args) {
+	PogContext_call_handler(self, "preloop");
 	while (true) {
 		SDL_PollEvent(&self->ev);
 		if (self->ev.type == SDL_QUIT) {
@@ -33,9 +43,44 @@ PogContext_run(PogContext *self, PyObject *args) {
 		}
 
 		SDL_RenderClear(self->renderer);
+		PogContext_call_handler(self, "render");
 		SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
 		SDL_RenderPresent(self->renderer);
 	}
+	PogContext_call_handler(self, "postloop");
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+PogContext_print_handlers(PogContext *self, PyObject *args) {
+	PyObject_Print(self->handlers, stdout, Py_PRINT_RAW);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+PogContext_add_handler(PogContext *self, PyObject *args) {
+	DO_POG_INIT(NULL);
+
+	char* event_type;
+	PyObject *handler;
+	
+	if (!PyArg_ParseTuple(args, "sO", &event_type, &handler))
+		return NULL;
+	
+	SDL_Log("Adding handler for %s\n", event_type);
+
+	if (!PyCallable_Check(handler)) {
+		PyErr_SetString(PyExc_TypeError, "Parameter two must be callable");
+		return NULL;
+	}
+	SDL_Log("Handler is callable!\n");
+
+	if (0 > PyDict_SetItemString(self->handlers, event_type, handler)) {
+		PyErr_SetString(PyExc_Exception, "Unable to add handler");
+		return NULL;
+	}
+
+	SDL_Log("Added handler for %s\n", event_type);
 	Py_RETURN_NONE;
 }
 
@@ -63,6 +108,7 @@ PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
 		SDL_Log("Window [%s] [%dx%d] initialized properly\n", title, width, height);
 	}
 	self->renderer = SDL_CreateRenderer(self->window, -1, 0);
+	self->handlers = PyDict_New();
 	return 0;
 }
 
@@ -70,12 +116,17 @@ static void
 PogContext_dealloc(PogContext* self) {
 	SDL_DestroyRenderer(&self->renderer);
 	SDL_DestroyWindow(self->window);
+	Py_TYPE(self->handlers)->tp_free(self->handlers);
 	Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyMethodDef PogContext_methods[] = {
 	{"run", PogContext_run, METH_NOARGS,
 	"Run the main loop"},
+	{"add_handler", PogContext_add_handler, METH_VARARGS,
+	"Add event handlers"},
+	{"print_handlers", PogContext_print_handlers, METH_NOARGS,
+	"Print all event handlers"},
 	{NULL}
 };
 
@@ -119,7 +170,6 @@ quit(PyObject *self, PyObject *args) {
 static PyMethodDef PogMethods[] = {
 	{ "init", init, METH_NOARGS, "Initialize"},
 	{ "quit", quit, METH_NOARGS, "Quit"},
-	// { "simple_loop", loop, METH_NOARGS, "A simple loop" },
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -136,9 +186,6 @@ PyInit_pog (void)
 {
 	PyObject *m;
 
-	if (PyType_Ready(&PogContextType) < 0)
-		return NULL;
-	
 	m = PyModule_Create(&pogmodule);
 	if (m == NULL)
 		return NULL;
@@ -151,6 +198,9 @@ PyInit_pog (void)
 		Py_DECREF(m);
 		return NULL;
 	}
+
+	if (PyType_Ready(&PogContextType) < 0)
+		return NULL;
 
 	Py_INCREF(&PogContextType);
 	if (PyModule_AddObject(m, "Context", (PyObject *) &PogContextType) < 0) {
