@@ -26,14 +26,16 @@ typedef struct {
 	PyObject *handlers;
 } PogContext;
 
+static void
+PogContext_call_handler(PogContext *self, const char* event) {
+	PyObject *handler = PyDict_GetItemString(self->handlers, event);
+	if (handler)
+		PyObject_CallNoArgs(handler);
+}
+
 static PyObject*
 PogContext_run(PogContext *self, PyObject *args) {
-	PyObject* preloop = PyDict_GetItemString(self->handlers, "preloop");
-	SDL_Log("Calling preloop");
-	if (preloop != NULL)
-		PyObject_CallNoArgs(preloop);
-	else
-		SDL_Log("preloop is NULL");
+	PogContext_call_handler(self, "preloop");
 	while (true) {
 		SDL_PollEvent(&self->ev);
 		if (self->ev.type == SDL_QUIT) {
@@ -41,12 +43,11 @@ PogContext_run(PogContext *self, PyObject *args) {
 		}
 
 		SDL_RenderClear(self->renderer);
+		PogContext_call_handler(self, "render");
 		SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
 		SDL_RenderPresent(self->renderer);
 	}
-	PyObject* postloop = PyDict_GetItemString(self->handlers, "postloop");
-	if (postloop != NULL)
-		PyObject_CallNoArgs(postloop);
+	PogContext_call_handler(self, "postloop");
 	Py_RETURN_NONE;
 }
 
