@@ -114,12 +114,13 @@ PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
 
 static void
 PogContext_dealloc(PogContext* self) {
-	SDL_DestroyRenderer(&self->renderer);
+	SDL_DestroyRenderer(self->renderer);
 	SDL_DestroyWindow(self->window);
 	Py_TYPE(self->handlers)->tp_free(self->handlers);
 	Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 static PyMethodDef PogContext_methods[] = {
 	{"run", PogContext_run, METH_NOARGS,
 	"Run the main loop"},
