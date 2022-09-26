@@ -28,7 +28,7 @@ typedef struct {
 
 static PyObject*
 PogContext_run(PogContext *self, PyObject *args) {
-	PyObject* preloop = PyObject_GetItem(self->handlers, "preloop");
+	PyObject* preloop = PyDict_GetItemString(self->handlers, "preloop");
 	SDL_Log("Calling preloop");
 	if (preloop != NULL)
 		PyObject_CallNoArgs(preloop);
@@ -44,9 +44,15 @@ PogContext_run(PogContext *self, PyObject *args) {
 		SDL_SetRenderDrawColor(self->renderer, 50, 50, 50, 255);
 		SDL_RenderPresent(self->renderer);
 	}
-	PyObject* postloop = PyObject_GetItem(self->handlers, "postloop");
+	PyObject* postloop = PyDict_GetItemString(self->handlers, "postloop");
 	if (postloop != NULL)
 		PyObject_CallNoArgs(postloop);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+PogContext_print_handlers(PogContext *self, PyObject *args) {
+	PyObject_Print(self->handlers, stdout, Py_PRINT_RAW);
 	Py_RETURN_NONE;
 }
 
@@ -57,15 +63,22 @@ PogContext_add_handler(PogContext *self, PyObject *args) {
 	char* event_type;
 	PyObject *handler;
 	
-	if (!PyArg_ParseTuple(args, "sO:set_callback", &event_type, &handler))
+	if (!PyArg_ParseTuple(args, "sO", &event_type, &handler))
 		return NULL;
+	
+	SDL_Log("Adding handler for %s\n", event_type);
 
 	if (!PyCallable_Check(handler)) {
 		PyErr_SetString(PyExc_TypeError, "Parameter two must be callable");
 		return NULL;
 	}
+	SDL_Log("Handler is callable!\n");
 
-	PyDict_SetItem(self->handlers, (PyObject*)event_type, handler);
+	if (0 > PyDict_SetItemString(self->handlers, event_type, handler)) {
+		PyErr_SetString(PyExc_Exception, "Unable to add handler");
+		return NULL;
+	}
+
 	SDL_Log("Added handler for %s\n", event_type);
 	Py_RETURN_NONE;
 }
@@ -111,6 +124,8 @@ static PyMethodDef PogContext_methods[] = {
 	"Run the main loop"},
 	{"add_handler", PogContext_add_handler, METH_VARARGS,
 	"Add event handlers"},
+	{"print_handlers", PogContext_print_handlers, METH_NOARGS,
+	"Print all event handlers"},
 	{NULL}
 };
 
