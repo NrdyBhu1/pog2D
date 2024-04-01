@@ -3,9 +3,9 @@
 #+date:     2022-09-19
 
 * Goto
-	[[Prerequisites][#Prerequisites]]
-	[[Installation][#Installation]]
-	[[Usage][#Usage]]
+	[[#Prerequisites][Prerequisites]]
+	[[#Installation][Installation]]
+	[[#Usage][Usage]]
 
 * Note
 This library is still under development
