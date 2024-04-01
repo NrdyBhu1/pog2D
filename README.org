@@ -3,9 +3,9 @@
 #+date:     2022-09-19
 
 * Goto
-	[[Prerequisites][#Prerequisites]]
-	[[Installation][#Installation]]
-	[[Usage][#Usage]]
+	[[#Prerequisites][Prerequisites]]
+	[[#Installation][Installation]]
+	[[#Usage][Usage]]
 
 * Note
 This library is still under development
@@ -23,6 +23,10 @@ $ pip install -e .
 #+begin_src python
 import pog
 
+# rendering to context
+def context_render():
+	pass # more to come
+
 # important to init
 pog.init()
 
@@ -31,6 +35,9 @@ c = pog.Context(title="Hello, World!", width=800, height=600)
 
 # run main loop
 c.run()
+
+# add event handlers
+c.add_handler("render", context_render)
 
 # quit
 pog.quit()
