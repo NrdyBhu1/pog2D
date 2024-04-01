@@ -2,6 +2,23 @@
 #+author:   NrdyBhu1
 #+date:     2022-09-19
 
+* Goto
+	[[Prerequisites][#Prerequisites]]
+	[[Installation][#Installation]]
+	[[Usage][#Usage]]
+
+* Note
+This library is still under development
+
+* Prerequisites
+SDL2
+
+* Installation
+#+begin_src
+$ python setup.py build
+$ pip install -e .
+#+end_src
+
 * Usage
 #+begin_src python
 import pog
