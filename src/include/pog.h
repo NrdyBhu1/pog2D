@@ -5,6 +5,8 @@
 
 #ifndef Py_POG_H
 #define Py_POG_H
+#include "./render.h"
+
 static PyObject* PogInitError;
 static bool initialized;
 
@@ -17,7 +19,5 @@ typedef struct {
 } PogContext;
 
 static PogContext *context;
-
-static PyObject* draw_rectangle(PyObject *self, PyObject *args);
 
 #endif // Py_POG_H
