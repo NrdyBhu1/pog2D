@@ -11,6 +11,7 @@ pog = Extension('pog',
 	],
 	include_dirs = [
 		# pkg-config --cflags sdl2
+        "src/include",
 		'/nix/store/bgc3rvghyjdby7lw94hkjjgwv1d20zp6-SDL2-2.0.20-dev/include/SDL2',
 	],
 	extra_link_args = [

@@ -1,30 +1,19 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <assert.h>
-#include <stdbool.h>
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+#include "include/pog.h"
+
+// source files
+#include "render.c"
 
 #define pog_doc "A simple 2D library"
 #define DO_POG_INIT(ret) if (!initialized) { \
 	PyErr_SetString(PogInitError, "Pog not initialized!"); \
 	return ret; \
 }
-
-static PyObject* PogInitError;
-static bool initialized;
-
-typedef struct {
-	PyObject_HEAD
-	SDL_Window *window;
-	SDL_Renderer *renderer;
-	SDL_Event ev;
-	PyObject *handlers;
-} PogContext;
 
 static void
 PogContext_call_handler(PogContext *self, const char* event) {
@@ -109,12 +98,14 @@ PogContext_init(PogContext *self, PyObject *args, PyObject *kwds) {
 	}
 	self->renderer = SDL_CreateRenderer(self->window, -1, 0);
 	self->handlers = PyDict_New();
+
+	context = self;
 	return 0;
 }
 
 static void
 PogContext_dealloc(PogContext* self) {
-	SDL_DestroyRenderer(&self->renderer);
+	SDL_DestroyRenderer(self->renderer);
 	SDL_DestroyWindow(self->window);
 	Py_TYPE(self->handlers)->tp_free(self->handlers);
 	Py_TYPE(self)->tp_free((PyObject*) self);
@@ -170,6 +161,7 @@ quit(PyObject *self, PyObject *args) {
 static PyMethodDef PogMethods[] = {
 	{ "init", init, METH_NOARGS, "Initialize"},
 	{ "quit", quit, METH_NOARGS, "Quit"},
+	{ "draw_rectangle", draw_rectangle, METH_VARARGS, "Draw a rectangle"},
 	{ NULL, NULL, 0, NULL }
 };
 
