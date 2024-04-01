@@ -1,6 +1,45 @@
 #include <Python.h>
 #include "include/pog.h"
 
+static int
+PogRect_init(PogRect *self, PyObject *args) 
+{
+	int x, y;
+	int w, h;
+	if (!PyArg_ParseTuple(args, "(ii)(ii)", &x, &y, &w, &h))
+		return -1;
+	self->rect.x = x, self->rect.y = y;
+	self->rect.w = w, self->rect.h = h;
+	return 0;
+}
+
+static PyObject* PogRect_getbounds(PogRect *self, PyObject *args)
+{
+	printf("Bounds are %d and %d\n", self->rect.w, self->rect.h);
+	return PyTuple_Pack(2, self->rect.w, self->rect.h);
+}
+
+static PyObject* PogRect_getpos(PogRect *self, PyObject *args)
+{
+	return PyTuple_Pack(2, self->rect.x, self->rect.y);
+}
+
+static PyObject* PogRect_update(PogRect *self, PyObject *args)
+{
+	int x, y;
+	if (!PyArg_ParseTuple(args, "ii", &x, &y))
+		return NULL;
+
+	self->rect->x = x;
+	self->rect->y = y;
+	Py_RETURN_NONE;
+}
+
+static void PogRect_dealloc(PogRect* self) 
+{
+	Py_TYPE(self)->tp_free((PyObject*) self);
+}
+
 static PyObject*
 draw_rectangle(PyObject *self, PyObject *args)
 {

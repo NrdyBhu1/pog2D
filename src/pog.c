@@ -195,9 +195,19 @@ PyInit_pog (void)
 	if (PyType_Ready(&PogContextType) < 0)
 		return NULL;
 
+	if (PyType_Ready(&PogRectType) < 0)
+		return NULL;
+
 	Py_INCREF(&PogContextType);
 	if (PyModule_AddObject(m, "Context", (PyObject *) &PogContextType) < 0) {
 		Py_DECREF(&PogContextType);
+		Py_DECREF(m);
+		return NULL;
+	}
+
+	Py_INCREF(&PogRectType);
+	if (PyModule_AddObject(m, "Rect", (PyObject *)&PogRectType) < 0) {
+		Py_DECREF(&PogRectType);
 		Py_DECREF(m);
 		return NULL;
 	}
