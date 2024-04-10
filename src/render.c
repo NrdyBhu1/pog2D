@@ -44,6 +44,22 @@ static void PogRect_dealloc(PogRect* self)
 }
 
 static PyObject*
+PogRect_render(PogRect *self, PyObject *args)
+{
+	int r, g, b;
+	bool fill = true;
+	if (!PyArg_ParseTuple(args, "(iii)|p", &r, &g, &b, &fill))
+		return NULL;
+
+	SDL_SetRenderDrawColor(context->renderer, r, g, b, 255);
+	if (fill)
+		SDL_RenderFillRect(context->renderer, &(self->rect));
+	else
+		SDL_RenderDrawRect(context->renderer, &(self->rect));
+	Py_RETURN_NONE;
+}
+
+static PyObject*
 draw_rectangle(PyObject *self, PyObject *args)
 {
 	int x, y; // position

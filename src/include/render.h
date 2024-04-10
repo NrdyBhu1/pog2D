@@ -13,6 +13,7 @@ static void PogRect_dealloc(PogRect* self);
 static PyObject* PogRect_getbounds(PogRect *self, PyObject *args);
 static PyObject* PogRect_getpos(PogRect *self, PyObject *args);
 static PyObject* PogRect_update(PogRect *self, PyObject *args);
+static PyObject* PogRect_render(PogRect *self, PyObject *args);
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 static PyMethodDef PogRect_methods[] = {
@@ -22,6 +23,8 @@ static PyMethodDef PogRect_methods[] = {
 		"Get position of rectangle"},
 	{ "update", PogRect_update, METH_VARARGS,
 		"Update the position of rectangle"},
+	{ "render", PogRect_render, METH_VARARGS,
+		"Renders the rectangle on screen\nTakes tuple of (r,g,b) as argument\nTakes another boolean as optional argument, whether to render a filled rect or empty rect"},
 	{NULL}
 };
 
